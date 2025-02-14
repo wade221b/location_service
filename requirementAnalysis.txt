@@ -1,0 +1,95 @@
+All the money related information (prices, fees, etc) are in the lowest denomination of the local currency. In euro countries they are in cents, in Sweden they are in öre, and in Japan they are in yen. [use "currency": "EUR" (static response), to divide by whatever when giving out the final price. ]
+
+provide the following [DONE]
+	GET /api/v1/delivery-order-price
+		query params{
+			venue_slug (string): The unique identifier (slug) for the venue from which the delivery order will be placed
+			cart_value: (integer): The total value of the items in the shopping cart
+			user_lat (number with decimal point): The latitude of the user's location
+			user_lon (number with decimal point): The longitude of the user's location
+		}
+
+		Eg request : curl http://localhost:8000/api/v1/delivery-order-price?venue_slug=home-assignment-venue-helsinki&cart_value=1000&user_lat=60.17094&user_lon=24.93087
+	output:
+		total_price (integer): The calculated total price
+		small_order_surcharge (integer): The calculated small order surcharge
+		cart_value (integer): The cart value. This is the same as what was got as query parameter. 
+		delivery (object): An object containing:
+			fee (integer): The calculated delivery fee
+			distance (integer): The calculated delivery distance in meters
+		Eg response : {
+		  "total_price": 1190,
+		  "small_order_surcharge": 0, 
+		  "cart_value": 1000,
+		  "delivery": {
+		    "fee": 190,
+		    "distance": 177
+		  }
+		}
+
+		 = order_minimum_no_surcharge(dynamic)
+
+	it calls:
+		static:
+			https://consumer-api.development.dev.woltapi.com/home-assignment-api/v1/venues/home-assignment-venue-berlin/static
+
+		dynamic : 
+			https://consumer-api.development.dev.woltapi.com/home-assignment-api/v1/venues/home-assignment-venue-berlin/dynamic
+
+		 //However, note that in real world there could be thousands of different venues so your implementation should work in general case.
+
+	You can assume that all the fields mentioned above are always present in the response payload of the corresponding endpoint if the response status code is 200.
+
+	Each object inside distance_ranges list contains the following:
+
+		min: The lower (inclusive) bound for the distance range in meters
+		max: The upper (exclusive) bound for the distance range in meters. "max": 0 means that the delivery is not available for delivery distances equal or longer the value of min in that object.
+		a: A constant amount to be added to the delivery fee on top of the base price
+		b: Multiplier to be used for calculating distance based component of the delivery fee. The formula is b * distance / 10 and the result should be rounded to the nearest integer value. For example, if the delivery distance is 1000 meters and the value of b is 2, we'd add 200 (2 * 1000 / 10) to the delivery fee.
+
+	Eg:
+		"distance_ranges": [
+		  {
+		    "min": 0,
+		    "max": 500,
+		    "a": 0,
+		    "b": 0,
+		    "flag": null
+		  },
+		  {
+		    "min": 500,
+		    "max": 1000,
+		    "a": 100,
+		    "b": 1,
+		    "flag": null
+		  },
+		  {
+		    "min": 1000,
+		    "max": 0,
+		    "a": 0,
+		    "b": 0,
+		    "flag": null
+		  }
+		]
+		For example, given the above distance_ranges example, if the delivery distance were 600 meters and the base_price were 199, the delivery fee would be 359 (base_price + a + b * distance / 10 == 199 + 100 + 1 * 600 / 10 == 359). Another example: if the delivery distance were 1000 meters or more, the delivery would not be possible.
+
+Explanation of final response
+
+Eg response : {
+  "total_price": 1190, //cart_value + fee(calculated)
+  "small_order_surcharge": 0, //order_minimum_no_surcharge(dynamnic) - cart_value(queryParams). Cant be negative
+  "cart_value": 1000, //query param
+  "delivery": {
+    "fee": 190, base_price (dynamic) + a + b * distance / 10
+    "distance": 177 , sqrt((user_coordinates (queryParam)- rest_coordinates(static))**2)
+  }
+}
+
+If the delivery is not possible, for example if the delivery distance is too long, the response status code of DOPC endpoint should be 400 (bad request) with explanatory information in the response payload.
+
+Sol : calculate straight line distance, check pricing from (distance_ranges) and apply that to calculate the final price. 
+if not possible, return 400
+else return actual price
+
+calculate distance and fee
+
