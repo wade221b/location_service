@@ -17,10 +17,10 @@ type DeliveryPriceCalculator interface {
 	CalculateDeliveryOrderPrice(venueSlug string, cartValue int, userLat, userLon float64) (*reqResp.DeliveryResponse, error)
 }
 type deliveryPriceCalculator struct {
-	client *httpclient.HTTPClient
+	client httpclient.Client
 }
 
-func NewDeliveryPriceCalculator(client *httpclient.HTTPClient) DeliveryPriceCalculator {
+func NewDeliveryPriceCalculator(client httpclient.Client) DeliveryPriceCalculator {
 	return &deliveryPriceCalculator{
 		client: client,
 	}
@@ -93,12 +93,16 @@ func (d *deliveryPriceCalculator) CalculateDeliveryOrderPrice(venueSlug string, 
 		return nil, err
 	}
 
+	fmt.Println("got static venud details staticVenueDetails ", staticVenueDetails)
+
 	dynamicVenueDetails, err := d.getDynamicVenueDetails(venueSlug) //get dynamic values for venue
 	if err != nil {
 		err = fmt.Errorf(err.Error())
 		log.Printf("Error in CalculateDeliveryOrderPrice: %v", err)
 		return nil, err
 	}
+
+	fmt.Println("got dynamic venud details staticVenueDetails ", dynamicVenueDetails)
 
 	log.Printf("order_minimum_no_surcharge = %v, cartvalue = %v",
 		dynamicVenueDetails.VenueRaw.DeliverySpecs.OrderMinimumNoSurcharge, cartValue)

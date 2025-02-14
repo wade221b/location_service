@@ -1,4 +1,3 @@
-// src/services/httpclient.go
 package httpclient
 
 import (
@@ -9,14 +8,19 @@ import (
 	"time"
 )
 
-// HTTPClient is a simple reusable client wrapper
+// Client is an interface that defines the behavior of our HTTP client.
+type Client interface {
+	Get(path string) ([]byte, error)
+}
+
+// HTTPClient is a simple reusable client wrapper that implements Client.
 type HTTPClient struct {
 	client  *http.Client
 	BaseURL string
 }
 
 // NewHTTPClient initializes an HTTPClient with a custom timeout, base URL, etc.
-func NewHTTPClient(baseURL string) *HTTPClient {
+func NewHTTPClient(baseURL string) Client {
 	return &HTTPClient{
 		BaseURL: baseURL,
 		client: &http.Client{
@@ -26,9 +30,9 @@ func NewHTTPClient(baseURL string) *HTTPClient {
 	}
 }
 
+// Get performs a GET request to the constructed full URL.
 func (hc *HTTPClient) Get(path string) ([]byte, error) {
 	fullURL := fmt.Sprintf("%s%s", hc.BaseURL, path)
-
 	resp, err := hc.client.Get(fullURL)
 	if err != nil {
 		log.Printf("Error in HTTPClient.Get: %v", err)
@@ -37,13 +41,13 @@ func (hc *HTTPClient) Get(path string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		log.Printf("Error in HTTPClient.Get: %v, GET request returned status code %v ", err, resp.StatusCode)
+		log.Printf("Error in HTTPClient.Get: GET request returned status code %v", resp.StatusCode)
 		return nil, fmt.Errorf("GET request returned status code %d", resp.StatusCode)
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Printf("Error in HTTPClient.Get: %v, failed to read response body ", err)
+		log.Printf("Error in HTTPClient.Get: failed to read response body: %v", err)
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
