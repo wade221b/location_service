@@ -8,6 +8,7 @@ import (
 
 	httpclient "github.com/your-username/your-project/src/client"
 	"github.com/your-username/your-project/src/constants"
+	"github.com/your-username/your-project/src/errors"
 	reqResp "github.com/your-username/your-project/src/req_resp"
 	"github.com/your-username/your-project/src/utils"
 	// reqResp "github.com/your-username/your-project/src/req_resp/req_resp"
@@ -68,6 +69,8 @@ func (d *deliveryPriceCalculator) getStaticVenueDetails(venue string) (*reqResp.
 
 	if err != nil {
 		err = fmt.Errorf(err.Error())
+		err = errors.NewServiceError(constants.LOCATION_SERVICE_INTERNAL_SERVER_ERROR_500, err)
+
 		log.Printf("Error in getStaticVenueDetails: %v", err)
 		return nil, err
 	}
@@ -88,7 +91,7 @@ func (d *deliveryPriceCalculator) CalculateDeliveryOrderPrice(venueSlug string, 
 
 	staticVenueDetails, err := d.getStaticVenueDetails(venueSlug) //get static values for venue
 	if err != nil {
-		err = fmt.Errorf(err.Error())
+		// err = fmt.Errorf(err.Error())
 		log.Printf("Error in CalculateDeliveryOrderPrice: %v", err)
 		return nil, err
 	}
@@ -116,7 +119,8 @@ func (d *deliveryPriceCalculator) CalculateDeliveryOrderPrice(venueSlug string, 
 
 	distanceRange := utils.GetDistanceRange(dynamicVenueDetails, distance)
 	if distanceRange == nil {
-		return nil, fmt.Errorf("distance out of reach")
+		err := errors.NewServiceError(constants.LOCATION_SERVICE_DISTANCE_OUT_OF_REACH_400, fmt.Errorf("distance out of reach"))
+		return nil, err
 	}
 
 	deliveryFee := float64(basePrice) + distanceRange.A + distanceRange.B*distance/10

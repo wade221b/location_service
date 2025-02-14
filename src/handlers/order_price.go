@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
+	"github.com/your-username/your-project/src/constants"
+	custErr "github.com/your-username/your-project/src/errors"
 	service "github.com/your-username/your-project/src/services"
 	// "github.com/your-username/your-project/internal/services"
 )
@@ -66,10 +68,14 @@ func (h *OrderPriceHandler) deliveryOrderPriceHandler(w http.ResponseWriter, r *
 	// Calculate the order price
 	responseData, err := h.calculator.CalculateDeliveryOrderPrice(venueSlug, cartValue, userLat, userLon)
 	if err != nil {
-
-		if strings.Contains(err.Error(), "distance out of reach") {
-			http.Error(w, "distance is out of reach", http.StatusBadRequest)
-			return
+		var svcErr *custErr.ServiceError
+		if errors.As(err, &svcErr) {
+			if svcErr.Code == constants.LOCATION_SERVICE_DISTANCE_OUT_OF_REACH_400 {
+				// Handle the specific error case here.
+				log.Printf("distance is out of reach " + svcErr.Code)
+				http.Error(w, "distance is out of reach", http.StatusBadRequest)
+				return
+			}
 		}
 
 		// Otherwise, respond with a generic 500
