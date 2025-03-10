@@ -1,23 +1,23 @@
 1. VVIMP : Start your docker desktop
 ```
-2. cd /project
+cd /project
 
-3. docker build -t delivery-service:latest .
+docker build -t delivery-service:latest .
 
-4. docker run -p 8000:8000 --name delivery-service -d delivery-service:latest
+docker run -p 8000:8000 --name delivery-service -d delivery-service:latest
 
-5. docker ps
+docker ps
 
-6. docker logs -f <containerID of delivery-service:latest>
+docker logs -f <containerID of delivery-service:latest>
 ```
 
 //Just in case the above steps dont work (it has been tested heavily on a mac and a windows machine), please follow the following steps
 
 ```
-1. cd /project
-2. go mod tidy
-3. cd /src
-4. go run main.go
+cd /project
+go mod tidy
+cd /src
+go run main.go
 ```
 Points to be noted
 1. This is a production ready code. Please read the comments everywhere as I have left them there to explain my thought process and future scope of extention for most logical parts.
