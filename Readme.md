@@ -1,5 +1,5 @@
 1. VVIMP : Start your docker desktop
-
+```
 2. cd /project
 
 3. docker build -t delivery-service:latest .
@@ -9,14 +9,16 @@
 5. docker ps
 
 6. docker logs -f <containerID of delivery-service:latest>
+```
 
 //Just in case the above steps dont work (it has been tested heavily on a mac and a windows machine), please follow the following steps
 
+```
 1. cd /project
 2. go mod tidy
 3. cd /src
 4. go run main.go
-
+```
 Points to be noted
 1. This is a production ready code. Please read the comments everywhere as I have left them there to explain my thought process and future scope of extention for most logical parts.
 2. Should set values of "PRICING_SERVICE_HOST" and  "CONSUMER_API" in the environment variables.
